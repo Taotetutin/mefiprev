@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEFI AI Assistant</title>
+    <style>
+        :root {
+            --primary: #00f7ff;
+            --secondary: #4a1dff;
+            --accent: #ff1dce;
+            --dark: #0a0b2e;
+            --light: #e6f7ff;
+            --success: #00ffa3;
+            --warning: #ffd700;
+            --danger: #ff3860;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--dark), #1a1b4b);
+            color: var(--light);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            max-width: 600px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
+            animation: shine 10s linear infinite;
+        }
+
+        @keyframes shine {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        h1 {
+            color: var(--primary);
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 600;
+            text-shadow: 0 0 10px rgba(0, 247, 255, 0.5);
+        }
+
+        .robot {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px;
+            position: relative;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .robot-head {
+            width: 60px;
+            height: 60px;
+            background: var(--primary);
+            border-radius: 30px;
+            position: absolute;
+            top: 20px;
+            left: 30px;
+            box-shadow: 0 0 20px rgba(0, 247, 255, 0.5);
+        }
+
+        .robot-eye {
+            width: 20px;
+            height: 20px;
+            background: var(--dark);
+            border-radius: 50%;
+            position: absolute;
+            top: 20px;
+            animation: blink 4s infinite;
+        }
+
+        .robot-eye.left { left: 10px; }
+        .robot-eye.right { right: 10px; }
+
+        @keyframes blink {
+            0%, 96%, 98% { transform: scaleY(1); }
+            97% { transform: scaleY(0); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .upload-options {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, var(--secondary), var(--primary));
+            color: var(--light);
+            padding: 15px 25px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.2),
+                transparent
+            );
+            transition: 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 247, 255, 0.3);
+        }
+
+        #imagePreview {
+            max-width: 100%;
+            margin: 20px 0;
+            border-radius: 12px;
+            display: none;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            border: 2px solid var(--primary);
+        }
+
+        .results {
+            margin-top: 30px;
+        }
+
+        .result-item {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid var(--primary);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        .result-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 247, 255, 0.2);
+        }
+
+        .result-item strong {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .category-i {
+            border-color: var(--success);
+        }
+
+        .category-ii {
+            border-color: var(--warning);
+        }
+
+        .category-iii {
+            border-color: var(--danger);
+        }
+
+        #imageInput, #cameraInput {
+            display: none;
+        }
+
+        .processing {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 11, 46, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 100;
+        }
+
+        .processing-text {
+            color: var(--primary);
+            margin-top: 20px;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        .scanner {
+            width: 100%;
+            height: 3px;
+            background: var(--primary);
+            position: absolute;
+            animation: scan 2s linear infinite;
+            box-shadow: 0 0 10px var(--primary);
+        }
+
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>MEFI AI Assistant</h1>
+        
+        <div class="robot">
+            <div class="robot-head">
+                <div class="robot-eye left"></div>
+                <div class="robot-eye right"></div>
+            </div>
+        </div>
+
+        <div class="upload-options">
+            <button class="btn" id="openCameraBtn">📷 Capturar</button>
+            <button class="btn" id="uploadBtn">📁 Subir Imagen</button>
+        </div>
+
+        <input type="file" id="imageInput" accept="image/*">
+        <input type="file" id="cameraInput" accept="image/*" capture="environment">
+
+        <img id="imagePreview" alt="Vista previa de la imagen">
+        
+        <button class="btn" id="analyzeBtn" disabled>Analizar Imagen</button>
+
+        <div class="processing">
+            <div class="scanner"></div>
+            <p class="processing-text">Analizando imagen...</p>
+        </div>
+
+        <div class="results" id="results"></div>
+    </div>
+
+    <script>
+        const imageInput = document.getElementById('imageInput');
+        const cameraInput = document.getElementById('cameraInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const results = document.getElementById('results');
+        const openCameraBtn = document.getElementById('openCameraBtn');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const processing = document.querySelector('.processing');
+
+        uploadBtn.addEventListener('click', () => {
+            imageInput.click();
+        });
+
+        openCameraBtn.addEventListener('click', () => {
+            cameraInput.click();
+        });
+
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleImage(file);
+            }
+        });
+
+        cameraInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleImage(file);
+            }
+        });
+
+        function handleImage(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imagePreview.src = e.target.result;
+                imagePreview.style.display = 'block';
+                analyzeBtn.disabled = false;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        analyzeBtn.addEventListener('click', () => {
+            processing.style.display = 'flex';
+            results.innerHTML = '';
+            
+            // Aquí iría la lógica de análisis de la imagen
+            // Por ahora solo mostramos un mensaje de que se necesita implementar
+            setTimeout(() => {
+                processing.style.display = 'none';
+                results.innerHTML = `
+                    <div class="result-item">
+                        <strong>Nota:</strong> El análisis de imagen será implementado próximamente.
+                    </div>
+                `;
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
